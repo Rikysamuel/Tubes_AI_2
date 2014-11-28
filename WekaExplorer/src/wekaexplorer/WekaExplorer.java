@@ -1,7 +1,10 @@
 package wekaexplorer;
 
 import java.io.*;
+<<<<<<< HEAD
 import java.util.Enumeration;
+=======
+>>>>>>> bae1a7aec34e4e68a6d72528d06dc4430a7d4f44
 import java.util.Random;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
@@ -9,7 +12,12 @@ import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.functions.MultilayerPerceptron;
 import weka.classifiers.lazy.IBk;
 import weka.classifiers.trees.J48;
+<<<<<<< HEAD
 import weka.core.*;
+=======
+import weka.core.Instance;
+import weka.core.Instances;
+>>>>>>> bae1a7aec34e4e68a6d72528d06dc4430a7d4f44
 import weka.core.converters.ArffLoader.ArffReader;
 import weka.core.converters.ArffSaver;
 import weka.core.converters.CSVLoader;
@@ -23,6 +31,7 @@ public class WekaExplorer {
 
     private Instances data;
     private Instances unlabeled;
+<<<<<<< HEAD
     private Classifier classifier;
 	
     // Method untuk mengset data training
@@ -37,6 +46,9 @@ public class WekaExplorer {
         unlabeled = _unlabeled;
     }
     
+=======
+	
+>>>>>>> bae1a7aec34e4e68a6d72528d06dc4430a7d4f44
     // Method untuk mengload instance yg ingin diklasifikasi dari file eksternal
     public void LoadUnkownLabel(String file) 
     {
@@ -72,7 +84,11 @@ public class WekaExplorer {
     }
     
     // Method untuk menampilkan hasil statistik pembelajaran dengan 10-fold cross validation
+<<<<<<< HEAD
     public void FoldSchema()
+=======
+    public void FoldSchema(Classifier classifier)
+>>>>>>> bae1a7aec34e4e68a6d72528d06dc4430a7d4f44
     {
         try{
             Evaluation eval = new Evaluation(data);
@@ -82,9 +98,16 @@ public class WekaExplorer {
     }
     
     // Method untuk menampilkan hasil statistik pembelajaran dengan full-training
+<<<<<<< HEAD
     public void FullSchema()
     {
         try{
+=======
+    public void FullSchema(Classifier classifier)
+    {
+        try{
+            
+>>>>>>> bae1a7aec34e4e68a6d72528d06dc4430a7d4f44
             Evaluation eval = new Evaluation(data);
             eval.evaluateModel(classifier,data);
             System.out.println(eval.toSummaryString("\nResults Full-Training\n\n", false));
@@ -92,7 +115,11 @@ public class WekaExplorer {
     }
     
     // Method untuk menuliskan model hipotesis ke file eksternal
+<<<<<<< HEAD
     public void PrintModel(String file)
+=======
+    public void PrintModel(Classifier classifier, String file)
+>>>>>>> bae1a7aec34e4e68a6d72528d06dc4430a7d4f44
     {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
             oos.writeObject(classifier);
@@ -114,7 +141,11 @@ public class WekaExplorer {
     }
     
     // Method untuk mengklasifikasikan sebuah instance
+<<<<<<< HEAD
     public Instances Classify()
+=======
+    public Instances Classify(Classifier classifier)
+>>>>>>> bae1a7aec34e4e68a6d72528d06dc4430a7d4f44
     {
         Instances labeled = new Instances(this.unlabeled);
         for (int i = 0; i < unlabeled.numInstances(); ++i) {
@@ -149,9 +180,21 @@ public class WekaExplorer {
             return this.unlabeled;
     }
     
+<<<<<<< HEAD
     // Method untuk mengambil filter yang akan digunakan untuk kategorisasi
     public StringToWordVector getFilter()
     {
+=======
+    // Method untuk m
+    
+    // Program Utama
+    public static void main(String[] args) throws Exception {
+        
+        // Meload data set dari file eksternal
+        String file = "dataset.arff";
+        WekaExplorer W = new WekaExplorer();
+        W.LoadDataset(file);
+>>>>>>> bae1a7aec34e4e68a6d72528d06dc4430a7d4f44
         StringToWordVector filter = new StringToWordVector();
         filter.setDoNotOperateOnPerClassBasis(true);
         filter.setLowerCaseTokens(true);
@@ -163,6 +206,7 @@ public class WekaExplorer {
         filter.setTokenizer(wt);
         filter.setStopwords(new File("stopwords.txt"));
         filter.setWordsToKeep(100000);
+<<<<<<< HEAD
         
         return filter;
     }
@@ -214,6 +258,12 @@ public class WekaExplorer {
         // Mengklasifikasikan data yang belum berlabel
         Instances result = W.Classify();
         System.out.println(result);
+=======
+
+        filter.setInputFormat(W.getdata());
+        Instances dataTraining = Filter.useFilter(W.getdata(),filter);
+        W.PrintToARFF(dataTraining, "dataset.vector.arff");     
+>>>>>>> bae1a7aec34e4e68a6d72528d06dc4430a7d4f44
     }
 }
 
