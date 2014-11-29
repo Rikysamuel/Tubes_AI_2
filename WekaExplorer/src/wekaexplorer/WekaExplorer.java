@@ -160,7 +160,9 @@ public class WekaExplorer {
 
         filter.setInputFormat(W.getdata());
         Instances dataTraining = Filter.useFilter(W.getdata(),filter);
-        W.PrintToARFF(dataTraining, "dataset.vector.arff");     
+        W.PrintToARFF(dataTraining, "dataset.vector.arff");
+      
+        
     }
 }
 

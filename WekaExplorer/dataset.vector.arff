@@ -1,4 +1,4 @@
-@relation 'dataset-weka.filters.unsupervised.attribute.StringToWordVector-R1-W100000-prune-rate-1.0-N0-L-S-stemmerweka.core.stemmers.NullStemmer-M1-O-stopwordsC:\\Users\\Stephen\\Documents\\NetBeansProjects\\WekaExplorer\\stopwords.txt-tokenizerweka.core.tokenizers.WordTokenizer -delimiters \" \\r\\n\\t.,;:\\\"\\\'()?!-¿¡+*&#$\\\%\\\\/=<>[]`@~0123456789\"'
+@relation 'dataset-weka.filters.unsupervised.attribute.StringToWordVector-R1-W100000-prune-rate-1.0-N0-L-S-stemmerweka.core.stemmers.NullStemmer-M1-O-stopwordsE:\\OneDrive\\Data Semester 5\\Artificial Intelligence\\Tubes 2\\WekaExplorer\\stopwords.txt-tokenizerweka.core.tokenizers.WordTokenizer -delimiters \" \\r\\n\\t.,;:\\\"\\\'()?!-¿¡+*&#$\\\%\\\\/=<>[]`@~0123456789\"'
 
 @attribute kategori_berita {Pendidikan,Politik,'Hukum dan Kriminal','Sosial Budaya',Olahraga,'Teknologi dan Sains',Hiburan,'Bisnis dan Ekonomi',Kesehatan,'Bencana dan Kecelakaan'}
 @attribute abangnya numeric
