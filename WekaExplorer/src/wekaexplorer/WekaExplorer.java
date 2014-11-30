@@ -146,7 +146,8 @@ public class WekaExplorer {
         FilteredClassifier FC = new FilteredClassifier();
         
 //        FC.setFilter(getFilterToWordVector());
-//        train = Filter.useFilter(data, null)
+        train = getFilterToWordVector(train);
+        test = getFilterToWordVector(test);
 //        
         FC.setClassifier(NB);
         FC.buildClassifier(train);
@@ -173,6 +174,7 @@ public class WekaExplorer {
         options[0] = "-R";
         options[1] = "1-2";
         filter.setOptions(options);
+        filter.setInputFormat(train);
         
         String delimiters = " \r\n\t.,;:\"\'()?!-¿¡+*&#$%\\/=<>[]`@~0123456789";
         wt.setDelimiters(delimiters);
@@ -295,16 +297,16 @@ public class WekaExplorer {
         
 //                W.setDataset(dataTraining);
         // Meload data yang ingin diklasifikasi dari file eksternal
-//        W.LoadUnkownLabel("unlabeled.arff");
+        W.LoadUnkownLabel("unlabeled.arff");
         
 //        // Membuat filter untuk merubah format data unlabeled
-//        Instances dataUnlabeled = Filter.useFilter(W.getUnlabeled(), NTS);
+        Instances dataUnlabeled = Filter.useFilter(W.getUnlabeled(), NTS);
 //        Instances dataUnlabeled2 = Filter.useFilter(dataUnlabeled, filter);
 //        
-//        W.PrintToARFF(dataUnlabeled, "unlabeled.string.arff");
+        W.PrintToARFF(dataUnlabeled, "unlabeled.string.arff");
 //        W.setUnlabeled(dataUnlabeled);
         
-//        W.getClassifierFiltered(dataTraining, dataUnlabeled);
+        W.getClassifierFiltered(dataTraining, dataUnlabeled);
         // Membuat Classifier baru untuk kategorisasi dan di build
 //        Classifier bayes = new NaiveBayes();
 //        W.setClassifier(bayes);
