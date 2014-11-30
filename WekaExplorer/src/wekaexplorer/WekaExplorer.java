@@ -5,6 +5,8 @@ import java.util.Random;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
 import weka.classifiers.bayes.NaiveBayes;
+import weka.classifiers.bayes.ComplementNaiveBayes;
+import weka.classifiers.bayes.NaiveBayesMultinomial;
 import weka.classifiers.meta.FilteredClassifier;
 import weka.core.*;
 import weka.core.converters.ArffLoader.ArffReader;
@@ -16,8 +18,8 @@ import weka.filters.unsupervised.attribute.StringToWordVector;
 
 public class WekaExplorer {
 
-    private Instances data;
-    private Instances unlabeled;
+    private Instances data; //traning data
+    private Instances unlabeled; //testing data
     private Classifier classifier;
 	
     // Method untuk mengset data training
@@ -245,14 +247,38 @@ public class WekaExplorer {
         System.out.println(eval.toMatrixString());  //print confused matrix
     }
     
-    
+    public void complementNaiveBayes(String filepath) throws Exception{
+         //data set
+        Instances train =  readDataFile(filepath);
+        
+        //set class attribute
+        train.setClassIndex(0);
+        
+        //create model
+        ComplementNaiveBayes cls = new ComplementNaiveBayes();
+        cls.buildClassifier(train);
+        
+        //copy tree to Model variable
+        classifier = cls;
+        
+        //evalute classifier and print some statistics
+        Evaluation eval = new Evaluation(train);
+        eval.crossValidateModel(classifier, train, 10, new Random(1));
+        
+        //print some information
+        System.out.println(cls.toString());    //print unprunned tree
+        System.out.println(eval.toSummaryString("=== Summary ===", false)); //print summary
+        System.out.println(eval.toClassDetailsString("\n=== Detailed Accuracy By Class ===\n")); //print class accuracy
+        System.out.println(eval.toMatrixString());  //print confused matrix
+    }
+     
     // Program Utama
     public static void main(String[] args) throws Exception {
         
         WekaExplorer W = new WekaExplorer();
         
         // Meload data set dari file eksternal
-        W.LoadDataset("E:\\OneDrive\\Data Semester 5\\Artificial Intelligence\\Tubes 2\\WekaExplorer\\dataset.arff");
+        W.LoadDataset("D:\\Dropbox\\sem5\\IF3170 Intelegensi Buatan\\tugas\\tubes 2\\github\\WekaExplorer\\dataset.arff");
         
         // Membuat filter untuk merubah format data training
         StringToWordVector filter = W.getFilter();
@@ -276,8 +302,14 @@ public class WekaExplorer {
         
         W.PrintToARFF(dataTraining2, "dataset.vector.arff");
 //        W.setDataset(dataTraining2);
+        //crossvalidation
+//        W.crossValidation("dataset.vector.arff");
         
-        W.crossValidation("dataset.vector.arff");
+        //complementnaive bayes
+       // W.complementNaiveBayes("dataset.vector.arff");
+        
+        //multinomial naive bayes
+//        W.naiveBayesMultinomial("dataset.vector.arff"); >>belom ada methodnya
         
 //        // Meload data yang ingin diklasifikasi dari file eksternal
 //        W.LoadUnkownLabel("unlabeled.arff");
