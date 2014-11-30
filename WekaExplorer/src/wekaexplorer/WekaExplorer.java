@@ -11,6 +11,7 @@ import weka.core.*;
 import weka.core.converters.ArffLoader.ArffReader;
 import weka.core.converters.ConverterUtils;
 import weka.core.tokenizers.WordTokenizer;
+import weka.experiment.InstanceQuery;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.NominalToString;
 import weka.filters.unsupervised.attribute.StringToWordVector;
@@ -262,31 +263,44 @@ public class WekaExplorer {
         System.out.println(eval.toClassDetailsString("\n=== Detailed Accuracy By Class ===\n")); //print class accuracy
         System.out.println(eval.toMatrixString());  //print confused matrix
     }
-     
+    
+    public Instances getDataFromDB(String _query) throws Exception{
+        InstanceQuery query = new InstanceQuery();
+        query.setDatabaseURL("jdbc:mysql://localhost:3306/news_aggregator");
+        query.setUsername("root");
+        query.setPassword("");
+        
+        query.setQuery(_query);
+        Instances returnData = query.retrieveInstances();
+        return returnData;
+    }
+    
     // Program Utama
     public static void main(String[] args) throws Exception {
         
-        WekaExplorer W = new WekaExplorer();
-        
-        // Meload data set dari file eksternal
-
-        W.LoadDataset("dataset.arff");
-
-        
-        // Membuat filter untuk merubah format data training
-        Instances dataTraining = W.getFilterNominalToString(W.getdata());
-        
-        W.PrintToARFF(dataTraining, "dataset.string.arff");
-
-        // Meload data yang ingin diklasifikasi dari file eksternal
-        W.LoadUnkownLabel("unlabeled.arff");
-        
+//        WekaExplorer W = new WekaExplorer();
+//        
+//        // Mengambil data dari DB dan menulis ke file
+//        Instances data2 = W.getDataFromDB("SELECT FULL_TEXT,JUDUL,LABEL FROM artikel NATURAL JOIN artikel_kategori_verified NATURAL JOIN kategori");
+//        W.PrintToARFF(data2, "dataset.arff");
+//        
+//        // Meload data set dari file eksternal
+//        W.LoadDataset("dataset.arff");
+//
+//        
+//        // Membuat filter untuk merubah format data training
+//        Instances dataTraining = W.getFilterNominalToString(W.getdata());
+//        W.PrintToARFF(dataTraining, "dataset.string.arff");
+//
+//        // Meload data yang ingin diklasifikasi dari file eksternal
+//        W.LoadUnkownLabel("unlabeled.arff");
+//        
 //        // Membuat filter untuk merubah format data unlabeled
-        Instances dataUnlabeled = W.getFilterNominalToStringTest(W.getUnlabeled());
-        
-        W.PrintToARFF(dataUnlabeled, "unlabeled.string.arff");
-
-        // Membuat model dan Mengklasifikasikan data yang belum berlabel
-        W.getClassifierFiltered(dataTraining, dataUnlabeled);
+//        Instances dataUnlabeled = W.getFilterNominalToStringTest(W.getUnlabeled());
+//        
+//        W.PrintToARFF(dataUnlabeled, "unlabeled.string.arff");
+//
+//        // Membuat model dan Mengklasifikasikan data yang belum berlabel
+//        W.getClassifierFiltered(dataTraining, dataUnlabeled);
     }
 }
