@@ -19,6 +19,7 @@ public class WekaExplorer {
     private Instances data;
     private Instances unlabeled;
     private Classifier classifier;
+    NominalToString NTS = new NominalToString();
 	
     // Method untuk mengset data training
     public void setDataset(Instances _data)
@@ -141,14 +142,16 @@ public class WekaExplorer {
             return this.unlabeled;
     }
     
+    // Method untuk Supplied Test Set
     public FilteredClassifier getClassifierFiltered(Instances train, Instances test) throws Exception{
         NaiveBayes NB = new NaiveBayes();
         FilteredClassifier FC = new FilteredClassifier();
         
-//        FC.setFilter(getFilterToWordVector());
+        // Set train dan set menjadi word vector
         train = getFilterToWordVector(train);
         test = getFilterToWordVector(test);
-//        
+
+        // Membangun model dan melakukan test
         FC.setClassifier(NB);
         FC.buildClassifier(train);
         for (int i = 0; i < test.numInstances(); i++) {
@@ -186,9 +189,27 @@ public class WekaExplorer {
         return train;
     }
     
-    public NominalToString getFilterToString() throws Exception{
-        NominalToString filter1 = new NominalToString();
-        return filter1;
+    // Method untuk membuat data train input terfilter menjadi string
+    public Instances getFilterNominalToString(Instances dataTrain) throws Exception{
+        String[] options = new String[2];
+        options[0] = "-C";
+        options[1] = "1-2";
+        NTS.setOptions(options);
+        NTS.setInputFormat(dataTrain);
+        
+        dataTrain = Filter.useFilter(dataTrain,NTS);
+        return dataTrain;
+    }
+    
+    // Method untuk membuat data test input terfilter menjadi string
+    public Instances getFilterNominalToStringTest(Instances test) throws Exception{
+        String[] options = new String[2];
+        options[0] = "-C";
+        options[1] = "1-2";
+        NTS.setOptions(options);
+        
+        test = Filter.useFilter(test, NTS);
+        return test;
     }
     
     // Mengset classifier sebagai atribut
@@ -205,69 +226,6 @@ public class WekaExplorer {
         }catch(Exception e) {}
     }
     
-    public Instances readDataFile(String filename){
-        Instances datainstances = null;                
-        try{
-           datainstances = ConverterUtils.DataSource.read(filename);
-        } catch (Exception e){
-            System.err.println(e);
-        }
-        return datainstances;
-    }
-     
-    public void fullTrainingSet(String filepath, String testfilepath) throws Exception{
-        //data set
-        Instances train =  readDataFile(filepath);
-        Instances test = readDataFile(testfilepath);
-        
-        //set class attribute
-        train.setClassIndex(train.numAttributes()-1);
-        test.setClassIndex(test.numAttributes()-1);
-        
-        //train classifier
-        Classifier cls = (Classifier)new NaiveBayes();   
-        cls.buildClassifier(train);
-        
-        //copy to Model variable
-        classifier = cls;
-        
-        //evaluate classifier and print some statistics
-        Evaluation eval = new Evaluation(test);
-        eval.evaluateModel(classifier, test);
-        
-        //print some information
-        System.out.println(cls.toString());
-        System.out.println(eval.toSummaryString("\nResults\n======\n",false));
-        System.out.println(eval.toClassDetailsString("\n=== Detailed Accuracy By Class ===\n")); //print class accuracy
-        System.out.println(eval.toMatrixString());  //print confused matrix
-    } 
-    
-     public void crossValidation(String filepath) throws Exception{
-         //data set
-        Instances train =  readDataFile(filepath);
-        
-        //set class attribute
-        train.setClassIndex(0);
-        
-        //create model
-        NaiveBayes cls = new NaiveBayes();
-        cls.buildClassifier(train);
-        
-        //copy tree to Model variable
-        classifier = cls;
-        
-        //evalute classifier and print some statistics
-        Evaluation eval = new Evaluation(train);
-        eval.crossValidateModel(classifier, train, 10, new Random(1));
-        
-        //print some information
-        System.out.println(cls.toString());    //print unprunned tree
-        System.out.println(eval.toSummaryString("=== Summary ===", false)); //print summary
-        System.out.println(eval.toClassDetailsString("\n=== Detailed Accuracy By Class ===\n")); //print class accuracy
-        System.out.println(eval.toMatrixString());  //print confused matrix
-    }
-    
-    
     // Program Utama
     public static void main(String[] args) throws Exception {
         
@@ -277,45 +235,18 @@ public class WekaExplorer {
         W.LoadDataset("D:\\dataset.arff");
         
         // Membuat filter untuk merubah format data training
-//        StringToWordVector filter = W.getFilterToWordVector();
-        NominalToString NTS = W.getFilterToString();
-        String[] options = new String[2];
-        options[0] = "-C";
-        options[1] = "1-2";
-        NTS.setOptions(options);
-        
-        NTS.setInputFormat(W.getdata());
-        Instances dataTraining = Filter.useFilter(W.getdata(),NTS);
-        
-//        filter.setInputFormat(dataTraining);
-//        Instances dataTraining2 = Filter.useFilter(W.getdata(), filter);
+        Instances dataTraining = W.getFilterNominalToString(W.getdata());
         
         W.PrintToARFF(dataTraining, "dataset.string.arff");
-        
-        
-//        W.crossValidation("dataset.vector.arff");
-        
-//                W.setDataset(dataTraining);
         // Meload data yang ingin diklasifikasi dari file eksternal
         W.LoadUnkownLabel("unlabeled.arff");
         
 //        // Membuat filter untuk merubah format data unlabeled
-        Instances dataUnlabeled = Filter.useFilter(W.getUnlabeled(), NTS);
-//        Instances dataUnlabeled2 = Filter.useFilter(dataUnlabeled, filter);
-//        
+        Instances dataUnlabeled = W.getFilterNominalToStringTest(W.getUnlabeled());
+        
         W.PrintToARFF(dataUnlabeled, "unlabeled.string.arff");
-//        W.setUnlabeled(dataUnlabeled);
-        
-        W.getClassifierFiltered(dataTraining, dataUnlabeled);
-        // Membuat Classifier baru untuk kategorisasi dan di build
-//        Classifier bayes = new NaiveBayes();
-//        W.setClassifier(bayes);
-//        W.buildClassifier();
 
-//        W.Classify();
-        
-        // Mengklasifikasikan data yang belum berlabel
-//        Instances result = W.Classify();
-//        System.out.println(result);
+        // Membuat model dan Mengklasifikasikan data yang belum berlabel
+        W.getClassifierFiltered(dataTraining, dataUnlabeled);
     }
 }
