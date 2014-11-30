@@ -143,13 +143,26 @@ public class WekaExplorer {
             return this.unlabeled;
     }
     
-    public FilteredClassifier getClassifierFiltered(){
-    FilteredClassifier FC = new FilteredClassifier();
+    public FilteredClassifier getClassifierFiltered(Instances train, Instances test) throws Exception{
+        NaiveBayes NB = new NaiveBayes();
+        FilteredClassifier FC = new FilteredClassifier();
+        
+//        FC.setFilter(getFilterToWordVector());
+//        train = Filter.useFilter(data, null)
+//        
+        FC.setClassifier(NB);
+        FC.buildClassifier(train);
+        for (int i = 0; i < test.numInstances(); i++) {
+           double pred = FC.classifyInstance(test.instance(i));
+           System.out.print("ID: " + test.instance(i).value(0));
+           System.out.print(", actual: " + test.classAttribute().value((int) test.instance(i).classValue()));
+           System.out.println(", predicted: " + test.classAttribute().value((int) pred));
+        }
         return FC;
     }
     
-    // Method untuk mengambil filter yang akan digunakan untuk kategorisasi
-    public StringToWordVector getFilter()
+    // Method untuk mmebuat instance menjadi terfilter yang akan digunakan untuk kategorisasi
+    public Instances getFilterToWordVector(Instances train) throws Exception
     {
         StringToWordVector filter = new StringToWordVector();
 //        filter.setDoNotOperateOnPerClassBasis(true);
@@ -157,16 +170,23 @@ public class WekaExplorer {
         
         // Mengset tokenizer untuk memisahkan kata - kata
         WordTokenizer wt = new WordTokenizer();
+        
+        String[] options = new String[2];
+        options[0] = "-R";
+        options[1] = "1-2";
+        filter.setOptions(options);
+        
         String delimiters = " \r\n\t.,;:\"\'()?!-¿¡+*&#$%\\/=<>[]`@~0123456789";
         wt.setDelimiters(delimiters);
         filter.setTokenizer(wt);
         filter.setStopwords(new File("stopwords.txt"));
         filter.setWordsToKeep(100000);
         
-        return filter;
+        train = Filter.useFilter(train, filter);
+        return train;
     }
     
-    public NominalToString getFilter1(){
+    public NominalToString getFilterToString() throws Exception{
         NominalToString filter1 = new NominalToString();
         return filter1;
     }
@@ -278,29 +298,28 @@ public class WekaExplorer {
         WekaExplorer W = new WekaExplorer();
         
         // Meload data set dari file eksternal
+
         W.LoadDataset("D:\\Dropbox\\sem5\\IF3170 Intelegensi Buatan\\tugas\\tubes 2\\github\\WekaExplorer\\dataset.arff");
+
         
         // Membuat filter untuk merubah format data training
-        StringToWordVector filter = W.getFilter();
-        NominalToString filter1 = W.getFilter1();
-        
+//        StringToWordVector filter = W.getFilterToWordVector();
+        NominalToString NTS = W.getFilterToString();
         String[] options = new String[2];
         options[0] = "-C";
         options[1] = "1-2";
+        NTS.setOptions(options);
         
-        filter1.setOptions(options);
-        filter1.setInputFormat(W.getdata());
-        Instances dataTraining = Filter.useFilter(W.getdata(),filter1);
+        NTS.setInputFormat(W.getdata());
+        Instances dataTraining = Filter.useFilter(W.getdata(),NTS);
         
-        String[] options2 = new String[2];
-        options2[0] = "-R";
-        options2[1] = "1-2";
+//        filter.setInputFormat(dataTraining);
+//        Instances dataTraining2 = Filter.useFilter(W.getdata(), filter);
         
-        filter.setOptions(options2);
-        filter.setInputFormat(dataTraining);
-        Instances dataTraining2 = Filter.useFilter(W.getdata(), filter);
+        W.PrintToARFF(dataTraining, "dataset.string.arff");
         
-        W.PrintToARFF(dataTraining2, "dataset.vector.arff");
+
+//        W.PrintToARFF(dataTraining2, "dataset.vector.arff");
 //        W.setDataset(dataTraining2);
         //crossvalidation
 //        W.crossValidation("dataset.vector.arff");
@@ -310,17 +329,20 @@ public class WekaExplorer {
         
         //multinomial naive bayes
 //        W.naiveBayesMultinomial("dataset.vector.arff"); >>belom ada methodnya
+
         
-//        // Meload data yang ingin diklasifikasi dari file eksternal
+//                W.setDataset(dataTraining);
+        // Meload data yang ingin diklasifikasi dari file eksternal
 //        W.LoadUnkownLabel("unlabeled.arff");
-////        
+        
 //        // Membuat filter untuk merubah format data unlabeled
-//        Instances dataUnlabeled = Filter.useFilter(W.getUnlabeled(), filter1);
+//        Instances dataUnlabeled = Filter.useFilter(W.getUnlabeled(), NTS);
 //        Instances dataUnlabeled2 = Filter.useFilter(dataUnlabeled, filter);
 //        
-//        W.PrintToARFF(dataUnlabeled2, "unlabeled.vector.arff");
+//        W.PrintToARFF(dataUnlabeled, "unlabeled.string.arff");
 //        W.setUnlabeled(dataUnlabeled);
         
+//        W.getClassifierFiltered(dataTraining, dataUnlabeled);
         // Membuat Classifier baru untuk kategorisasi dan di build
 //        Classifier bayes = new NaiveBayes();
 //        W.setClassifier(bayes);
