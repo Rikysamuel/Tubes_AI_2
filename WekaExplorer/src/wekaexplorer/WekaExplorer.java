@@ -128,6 +128,7 @@ public class WekaExplorer {
     public void PrintToARFF(Instances Data, String filename) throws IOException
     {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
+//            System.out.println(Data);
             writer.write(Data.toString());
             writer.flush();
         }
@@ -205,11 +206,6 @@ public class WekaExplorer {
     
     // Method untuk membuat data test input terfilter menjadi string
     public Instances getFilterNominalToStringTest(Instances test) throws Exception{
-        String[] options = new String[2];
-        options[0] = "-C";
-        options[1] = "1-2";
-        NTS.setOptions(options);
-        
         test = Filter.useFilter(test, NTS);
         return test;
     }
@@ -275,32 +271,52 @@ public class WekaExplorer {
         return returnData;
     }
     
+    public void readDataTrain(String File, String article,String judul, String LABEL) throws FileNotFoundException, IOException{
+        try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(File, true)))) {
+            out.print("\n'" + article + "','"+judul + "',"+LABEL);
+        }catch (IOException e) {
+            System.err.println(e);
+        }
+    }
+    
     // Program Utama
     public static void main(String[] args) throws Exception {
         
-//        WekaExplorer W = new WekaExplorer();
+        WekaExplorer W = new WekaExplorer();
+        
+        
+        //Normal
+        // Mengambil data dari DB dan menulis ke file
+        Instances data2 = W.getDataFromDB("SELECT FULL_TEXT,JUDUL,LABEL FROM artikel NATURAL JOIN artikel_kategori_verified NATURAL JOIN kategori");
+        W.PrintToARFF(data2, "dataset.arff");
+        
+        // Meload data set dari file eksternal
+        W.LoadDataset("dataset.arff");
+
+        
+        // Membuat filter untuk merubah format data training
+        Instances dataTraining = W.getFilterNominalToString(W.getdata());
+        W.PrintToARFF(dataTraining, "dataset.string.arff");
+        
+        Instances data3 = W.getDataFromDB("SELECT FULL_TEXT,JUDUL,'?' as LABEL FROM artikel where id_artikel=30610");
+        W.PrintToARFF(data3, "unlabeled.arff");
 //        
-//        // Mengambil data dari DB dan menulis ke file
-//        Instances data2 = W.getDataFromDB("SELECT FULL_TEXT,JUDUL,LABEL FROM artikel NATURAL JOIN artikel_kategori_verified NATURAL JOIN kategori");
-//        W.PrintToARFF(data2, "dataset.arff");
-//        
-//        // Meload data set dari file eksternal
-//        W.LoadDataset("dataset.arff");
-//
-//        
-//        // Membuat filter untuk merubah format data training
-//        Instances dataTraining = W.getFilterNominalToString(W.getdata());
-//        W.PrintToARFF(dataTraining, "dataset.string.arff");
-//
-//        // Meload data yang ingin diklasifikasi dari file eksternal
-//        W.LoadUnkownLabel("unlabeled.arff");
-//        
-//        // Membuat filter untuk merubah format data unlabeled
-//        Instances dataUnlabeled = W.getFilterNominalToStringTest(W.getUnlabeled());
-//        
-//        W.PrintToARFF(dataUnlabeled, "unlabeled.string.arff");
-//
-//        // Membuat model dan Mengklasifikasikan data yang belum berlabel
-//        W.getClassifierFiltered(dataTraining, dataUnlabeled);
+        W.LoadUnkownLabel("unlabeled.arff");
+        // Membuat filter untuk merubah format data unlabeled
+        Instances dataUnlabeled = W.getFilterNominalToStringTest(W.getUnlabeled()); 
+        W.PrintToARFF(dataUnlabeled, "unlabeled.string.arff");
+
+        // Membuat model dan Mengklasifikasikan data yang belum berlabel
+        W.getClassifierFiltered(dataTraining, dataUnlabeled);
+        
+        
+        //rebuild
+        String article="KOMPAS.com - Smartphone premium HTC terbaru akan meluncur sekitar tiga hingga empat bulan lagi. Sesuai dengan tradisi, perangkat tersebut kemungkinan akan mengusung nama HTC One M9. \\n\\nSelain M9, HTC juga disebutkan akan membuat varian lainnya, yaitu M9 Prime. Kini, bocoran pertama seputar spesifikasi smartphone itu telah beredar di internet.\\n\\nSitus Android Headline pada Jumat (28/11/2014), merilis spesifikasi smartphone HTC yang berada di jajaran paling atas itu. Dikutip oleh KompasTekno, M9 Prime akan mengusung layar ukuran 5,5 inci dengan resolusi 2K/QHD 2560 x 1440 piksel.\\n\\nSelain memiliki resolusi layar tinggi, M9 Prime juga akan dibekali dengan prosesor terbaru buatan Qualcomm, yaitu Snapdragon 805 dengan baterai kapasitas 3500 mAh.\\n\\nKesalahan HTC yang hanya menyertakan RAM 2 GB dalam M8 tahun lalu nampaknya akan dibayar dengan memberikan kapasitas RAM lebih tinggi lagi, yaitu 3 GB dalam M9 Prime.\\n\\nDari segi kamera, HTC One M9 Prime dikabarkan akan mengusung kamera resolusi 16 megapiksel dengan sistem stabilisasi optik. \\n\\nHTC pernah bekerja sama dengan Beat audio untuk memperkuat speaker dalam smartphone buatannya. Speaker buatan BoomSound pun juga telah digunakan dalam HTC One M8.\\n\\nKini, vendor Taiwan tersebut kabarnya akan menggandeng raksasa audio lainnya, Bose untuk memperkuat sistem audio dalam M9 Prime. HTC One M9 dijadwalkan dirilis di ajang Mobile World Congress 2015 di Barcelona pada 2 Maret mendatang.','Bocoran Pertama Android HTC M9 Prime";
+        String judul = "Bocoran Pertama Android HTC M9 Prime";
+        String label = "\'Teknologi dan Sains\'";
+        W.readDataTrain("dataset.string.arff", article,judul,label);
+        W.LoadFromFile("dataset.string.arff", false);
+        dataTraining = W.getdata();
+        W.getClassifierFiltered(dataTraining, dataUnlabeled);
     }
 }
