@@ -2,6 +2,7 @@ package wekaexplorer;
 
 import java.io.*;
 import java.util.Random;
+import java.util.Vector;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
 import weka.classifiers.bayes.NaiveBayes;
@@ -9,6 +10,7 @@ import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.meta.FilteredClassifier;
 import weka.core.*;
 import weka.core.converters.ArffLoader.ArffReader;
+import weka.core.converters.CSVLoader;
 import weka.core.converters.ConverterUtils;
 import weka.core.tokenizers.WordTokenizer;
 import weka.experiment.InstanceQuery;
@@ -170,8 +172,8 @@ public class WekaExplorer {
     public Instances getFilterToWordVector(Instances train) throws Exception
     {
         StringToWordVector filter = new StringToWordVector();
-//        filter.setDoNotOperateOnPerClassBasis(true);
-//        filter.setLowerCaseTokens(true);
+        filter.setDoNotOperateOnPerClassBasis(true);
+        filter.setLowerCaseTokens(true);
         
         // Mengset tokenizer untuk memisahkan kata - kata
         WordTokenizer wt = new WordTokenizer();
@@ -276,6 +278,131 @@ public class WekaExplorer {
             out.print("\n'" + article + "','"+judul + "',"+LABEL);
         }catch (IOException e) {
             System.err.println(e);
+        }
+    }
+    
+    // Mengload file csv dan mengembalikan Instances di dalamnya
+    public void loadCSV(String filename)
+    {
+        CSVLoader csv = new CSVLoader();
+        try {
+            csv.setFile(new File(filename));
+            data = csv.getDataSet();
+            data.deleteAttributeAt(12);
+            data.deleteAttributeAt(11);
+            data.deleteAttributeAt(10);
+            data.deleteAttributeAt(9);
+            data.deleteAttributeAt(8);
+            data.deleteAttributeAt(7);
+            data.deleteAttributeAt(6);
+            data.deleteAttributeAt(4);
+            data.deleteAttributeAt(3);
+            data.deleteAttributeAt(1);
+            data.deleteAttributeAt(0);
+            }catch(Exception e) {
+                System.err.println(e);
+            }
+        
+    }
+    
+    public void datatoARFF(Vector<String> title, Vector<String> content, String filepath) throws IOException{
+        try (FileWriter fw = new FileWriter(filepath); PrintWriter pw = new PrintWriter(fw)) {
+            
+            pw.println("@relation QueryResult");
+            pw.println("");
+            
+            pw.print("@attribute full_text {");
+            for(int i=0;i<content.size()-1;i++)
+            {
+                pw.print("\'");
+                pw.print(content.get(i));
+                pw.print("\',");
+            }
+            pw.print("\'");
+            pw.print(content.get(content.size()-1));
+            pw.println("'}");
+            
+            pw.print("@attribute judul {");
+            for(int i=0;i<title.size()-1;i++)
+            {
+                pw.print("\'");
+                pw.print(title.get(i));
+                pw.print("\',");
+            }
+            pw.print("\'");
+            pw.print(title.get(title.size()-1));
+            pw.println("'}");
+            
+            pw.println("@attribute label {Pendidikan,Politik,'Hukum dan Kriminal','Sosial Budaya',Olahraga,'Teknologi dan Sains',Hiburan,'Bisnis dan Ekonomi',Kesehatan,'Bencana dan Kecelakaan'}");
+            
+            pw.println("");
+            
+            pw.println("@data");
+            for(int i=0;i<content.size();i++)
+            {
+                pw.print("\'");
+                pw.print(content.get(i));
+                pw.print("\',");
+                pw.print("\'");
+                pw.print(title.get(i));
+                pw.println("','?'");
+            }
+            
+            pw.flush();
+        }
+     }
+    
+    public String getFullText(String instance)
+    {
+        String title = "";
+        int i=1;
+        while(instance.charAt(i)!='\'')
+        {
+            title = title + instance.charAt(i);
+            i++;
+        }
+        return title;
+    }
+    
+    public String getTitle(String instance)
+    {
+        String title = "";
+        int i=1;
+        while(instance.charAt(i)!='\'')
+        {
+            i++;
+        }
+        i+=3;
+        while(instance.charAt(i)!='\'')
+        {
+            title = title + instance.charAt(i);
+            i++;
+        }
+        return title;
+    }
+    
+    public void CSVtoARFF(Instances dataset, String arffpath)
+    {
+        Vector<String> titlearray = new Vector<>();
+        Vector<String> fulltextarray = new Vector<>();
+        
+        // Mengambil text2nya
+        for(int i=0;i<dataset.size();i++)
+        {
+            String full_text = getFullText(dataset.get(0).toString());
+            fulltextarray.add(full_text);
+        }
+        for(int i=0;i<dataset.size();i++)
+        {
+            String title = getTitle(dataset.get(0).toString());
+            titlearray.add(title);
+        }
+        try{
+            datatoARFF(titlearray, fulltextarray,arffpath);
+        }
+        catch(Exception e)
+        {
+            
         }
     }
     
