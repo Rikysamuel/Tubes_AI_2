@@ -50,7 +50,7 @@ public class WekaExplorer {
     }
     
     // Mengload file .arff (baik data set maupun instance yang ingin diklasifikasi)
-    private void LoadFromFile(String file, boolean unknown)
+    public void LoadFromFile(String file, boolean unknown)
     {
        try{
             BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -187,7 +187,7 @@ public class WekaExplorer {
         String delimiters = " \r\n\t.,;:\"\'()?!-¿¡+*&#$%\\/=<>[]`@~0123456789";
         wt.setDelimiters(delimiters);
         filter.setTokenizer(wt);
-        filter.setStopwords(new File("stopwords.txt"));
+        filter.setStopwords(new File("D:\\stopwords.txt"));
         filter.setWordsToKeep(100000);
         
         train = Filter.useFilter(train, filter);
@@ -280,7 +280,6 @@ public class WekaExplorer {
             System.err.println(e);
         }
     }
-    
     // Mengload file csv dan mengembalikan Instances di dalamnya
     public void loadCSV(String filename)
     {
@@ -299,6 +298,9 @@ public class WekaExplorer {
             data.deleteAttributeAt(3);
             data.deleteAttributeAt(1);
             data.deleteAttributeAt(0);
+            data.renameAttribute(0, "full_text");
+            data.renameAttribute(1, "judul");
+            data.renameAttribute(2, "label");
             }catch(Exception e) {
                 System.err.println(e);
             }
@@ -352,6 +354,19 @@ public class WekaExplorer {
         }
      }
     
+    public void datatoCSV(Vector<String> title, Vector<String> content, Vector<String> label, String filepath) throws IOException {
+        try (FileWriter fw = new FileWriter(filepath); PrintWriter pw = new PrintWriter(fw)) {
+            
+            pw.println("full_text,judul,label");
+            for(int i=0;i<title.size();i++)
+            {
+                pw.println("'"+content.get(i)+"','"+title.get(i)+"','"+label.get(i)+"'");
+            }
+            
+            pw.flush();
+        }
+    }
+    
     public String getFullText(String instance)
     {
         String title = "";
@@ -381,6 +396,35 @@ public class WekaExplorer {
         return title;
     }
     
+    public String getLabel(String instance)
+    {
+        String label = "";
+        int i=1;
+        while(instance.charAt(i)!='\'')
+        {
+            i++;
+        }
+        i+=3;
+        while(instance.charAt(i)!='\'')
+        {
+            i++;
+        }
+        i+=2;
+        if(instance.charAt(i)=='\'')
+        {
+            i++;
+        }
+        while(i<instance.length())
+        {
+            if(instance.charAt(i)!='\'')
+            {
+                label = label + instance.charAt(i);
+            }
+            i++;
+        }
+        return label;
+    }
+    
     public void CSVtoARFF(Instances dataset, String arffpath)
     {
         Vector<String> titlearray = new Vector<>();
@@ -389,12 +433,12 @@ public class WekaExplorer {
         // Mengambil text2nya
         for(int i=0;i<dataset.size();i++)
         {
-            String full_text = getFullText(dataset.get(0).toString());
+            String full_text = getFullText(dataset.get(i).toString());
             fulltextarray.add(full_text);
         }
         for(int i=0;i<dataset.size();i++)
         {
-            String title = getTitle(dataset.get(0).toString());
+            String title = getTitle(dataset.get(i).toString());
             titlearray.add(title);
         }
         try{
@@ -406,9 +450,70 @@ public class WekaExplorer {
         }
     }
     
+    // Mengconvert arff ke csv
+    public void ARFFtoCSV(Instances dataset, String csvpath)
+    {
+        Vector<String> titlearray = new Vector<>();
+        Vector<String> fulltextarray = new Vector<>();
+        Vector<String> labelarray = new Vector<>();
+        
+        // Mengambil text2nya
+        for(int i=0;i<dataset.size();i++)
+        {
+            String full_text = getFullText(dataset.get(i).toString());
+            fulltextarray.add(full_text);
+        }
+        for(int i=0;i<dataset.size();i++)
+        {
+            String title = getTitle(dataset.get(i).toString());
+            titlearray.add(title);
+        }
+        for(int i=0;i<dataset.size();i++)
+        {
+            String label = getLabel(dataset.get(i).toString());
+            labelarray.add(label);
+        }
+        try{
+            datatoCSV(titlearray, fulltextarray, labelarray, csvpath);
+        }
+        catch(Exception e)
+        {
+            
+        }
+    }
+    
+    public void readInput(String title, String content, String filename) throws IOException{
+        try (FileWriter fw = new FileWriter(filename); PrintWriter pw = new PrintWriter(fw)) {
+            
+            pw.println("@relation QueryResult");
+            pw.println("");
+            
+            pw.print("@attribute FULL_TEXT {'");
+            pw.print(content);
+            pw.println("'}");
+            
+            pw.print("@attribute JUDUL {'");
+            pw.print(title);
+            pw.println("'}");
+            
+            pw.println("@attribute LABEL {'?'}");
+            
+            pw.println("");
+            
+            pw.println("@data");
+            pw.print("'");
+            pw.print(content);
+            pw.print("','");
+            pw.print(title);
+            pw.print("'");
+            pw.print(",'?'");
+            
+            pw.flush();
+        }
+     } 
     // Program Utama
     public static void main(String[] args) throws Exception {
-        
+//        
         WekaExplorer W = new WekaExplorer();
         
         
@@ -419,31 +524,39 @@ public class WekaExplorer {
         
         // Meload data set dari file eksternal
         W.LoadDataset("dataset.arff");
-
         
         // Membuat filter untuk merubah format data training
         Instances dataTraining = W.getFilterNominalToString(W.getdata());
         W.PrintToARFF(dataTraining, "dataset.string.arff");
         
-        Instances data3 = W.getDataFromDB("SELECT FULL_TEXT,JUDUL,'?' as LABEL FROM artikel where id_artikel=30610");
-        W.PrintToARFF(data3, "unlabeled.arff");
-//        
+//        Instances data3 = W.getDataFromDB("SELECT FULL_TEXT,JUDUL,'?' as LABEL FROM artikel where id_artikel=30610");
+//        W.PrintToARFF(data3, "unlabeled.arff");
+        String article="KOMPAS.com - Smartphone premium HTC terbaru akan meluncur sekitar tiga hingga empat bulan lagi. Sesuai dengan tradisi, perangkat tersebut kemungkinan akan mengusung nama HTC One M9. \\n\\nSelain M9, HTC juga disebutkan akan membuat varian lainnya, yaitu M9 Prime. Kini, bocoran pertama seputar spesifikasi smartphone itu telah beredar di internet.\\n\\nSitus Android Headline pada Jumat (28/11/2014), merilis spesifikasi smartphone HTC yang berada di jajaran paling atas itu. Dikutip oleh KompasTekno, M9 Prime akan mengusung layar ukuran 5,5 inci dengan resolusi 2K/QHD 2560 x 1440 piksel.\\n\\nSelain memiliki resolusi layar tinggi, M9 Prime juga akan dibekali dengan prosesor terbaru buatan Qualcomm, yaitu Snapdragon 805 dengan baterai kapasitas 3500 mAh.\\n\\nKesalahan HTC yang hanya menyertakan RAM 2 GB dalam M8 tahun lalu nampaknya akan dibayar dengan memberikan kapasitas RAM lebih tinggi lagi, yaitu 3 GB dalam M9 Prime.\\n\\nDari segi kamera, HTC One M9 Prime dikabarkan akan mengusung kamera resolusi 16 megapiksel dengan sistem stabilisasi optik. \\n\\nHTC pernah bekerja sama dengan Beat audio untuk memperkuat speaker dalam smartphone buatannya. Speaker buatan BoomSound pun juga telah digunakan dalam HTC One M8.\\n\\nKini, vendor Taiwan tersebut kabarnya akan menggandeng raksasa audio lainnya, Bose untuk memperkuat sistem audio dalam M9 Prime. HTC One M9 dijadwalkan dirilis di ajang Mobile World Congress 2015 di Barcelona pada 2 Maret mendatang.";
+        String judul = "Bocoran Pertama Android HTC M9 Prime";
+        W.readInput(judul, article, "unlabeled.arff");
+        
         W.LoadUnkownLabel("unlabeled.arff");
         // Membuat filter untuk merubah format data unlabeled
         Instances dataUnlabeled = W.getFilterNominalToStringTest(W.getUnlabeled()); 
         W.PrintToARFF(dataUnlabeled, "unlabeled.string.arff");
-
+        
         // Membuat model dan Mengklasifikasikan data yang belum berlabel
         W.getClassifierFiltered(dataTraining, dataUnlabeled);
-        
-        
-        //rebuild
-        String article="KOMPAS.com - Smartphone premium HTC terbaru akan meluncur sekitar tiga hingga empat bulan lagi. Sesuai dengan tradisi, perangkat tersebut kemungkinan akan mengusung nama HTC One M9. \\n\\nSelain M9, HTC juga disebutkan akan membuat varian lainnya, yaitu M9 Prime. Kini, bocoran pertama seputar spesifikasi smartphone itu telah beredar di internet.\\n\\nSitus Android Headline pada Jumat (28/11/2014), merilis spesifikasi smartphone HTC yang berada di jajaran paling atas itu. Dikutip oleh KompasTekno, M9 Prime akan mengusung layar ukuran 5,5 inci dengan resolusi 2K/QHD 2560 x 1440 piksel.\\n\\nSelain memiliki resolusi layar tinggi, M9 Prime juga akan dibekali dengan prosesor terbaru buatan Qualcomm, yaitu Snapdragon 805 dengan baterai kapasitas 3500 mAh.\\n\\nKesalahan HTC yang hanya menyertakan RAM 2 GB dalam M8 tahun lalu nampaknya akan dibayar dengan memberikan kapasitas RAM lebih tinggi lagi, yaitu 3 GB dalam M9 Prime.\\n\\nDari segi kamera, HTC One M9 Prime dikabarkan akan mengusung kamera resolusi 16 megapiksel dengan sistem stabilisasi optik. \\n\\nHTC pernah bekerja sama dengan Beat audio untuk memperkuat speaker dalam smartphone buatannya. Speaker buatan BoomSound pun juga telah digunakan dalam HTC One M8.\\n\\nKini, vendor Taiwan tersebut kabarnya akan menggandeng raksasa audio lainnya, Bose untuk memperkuat sistem audio dalam M9 Prime. HTC One M9 dijadwalkan dirilis di ajang Mobile World Congress 2015 di Barcelona pada 2 Maret mendatang.','Bocoran Pertama Android HTC M9 Prime";
-        String judul = "Bocoran Pertama Android HTC M9 Prime";
-        String label = "\'Teknologi dan Sains\'";
-        W.readDataTrain("dataset.string.arff", article,judul,label);
-        W.LoadFromFile("dataset.string.arff", false);
-        dataTraining = W.getdata();
-        W.getClassifierFiltered(dataTraining, dataUnlabeled);
+//        
+//        
+          //rebuild
+//        String article="KOMPAS.com - Smartphone premium HTC terbaru akan meluncur sekitar tiga hingga empat bulan lagi. Sesuai dengan tradisi, perangkat tersebut kemungkinan akan mengusung nama HTC One M9. \\n\\nSelain M9, HTC juga disebutkan akan membuat varian lainnya, yaitu M9 Prime. Kini, bocoran pertama seputar spesifikasi smartphone itu telah beredar di internet.\\n\\nSitus Android Headline pada Jumat (28/11/2014), merilis spesifikasi smartphone HTC yang berada di jajaran paling atas itu. Dikutip oleh KompasTekno, M9 Prime akan mengusung layar ukuran 5,5 inci dengan resolusi 2K/QHD 2560 x 1440 piksel.\\n\\nSelain memiliki resolusi layar tinggi, M9 Prime juga akan dibekali dengan prosesor terbaru buatan Qualcomm, yaitu Snapdragon 805 dengan baterai kapasitas 3500 mAh.\\n\\nKesalahan HTC yang hanya menyertakan RAM 2 GB dalam M8 tahun lalu nampaknya akan dibayar dengan memberikan kapasitas RAM lebih tinggi lagi, yaitu 3 GB dalam M9 Prime.\\n\\nDari segi kamera, HTC One M9 Prime dikabarkan akan mengusung kamera resolusi 16 megapiksel dengan sistem stabilisasi optik. \\n\\nHTC pernah bekerja sama dengan Beat audio untuk memperkuat speaker dalam smartphone buatannya. Speaker buatan BoomSound pun juga telah digunakan dalam HTC One M8.\\n\\nKini, vendor Taiwan tersebut kabarnya akan menggandeng raksasa audio lainnya, Bose untuk memperkuat sistem audio dalam M9 Prime. HTC One M9 dijadwalkan dirilis di ajang Mobile World Congress 2015 di Barcelona pada 2 Maret mendatang.','Bocoran Pertama Android HTC M9 Prime";
+//        String judul = "Bocoran Pertama Android HTC M9 Prime";
+//        String label = "\'Teknologi dan Sains\'";
+//        W.readInput(article, label, label);
+//        W.readDataTrain("dataset.string.arff", article,judul,label);
+//        W.LoadFromFile("dataset.string.arff", false);
+//        dataTraining = W.getdata();
+//        W.getClassifierFiltered(dataTraining, dataUnlabeled);
+//        
+//        W.readDataTrain("dataset.string.arff", article,judul,label);
+//        W.LoadFromFile("dataset.string.arff", false);
+//        dataTraining = W.getdata();
+//        W.getClassifierFiltered(dataTraining, dataUnlabeled);
     }
 }
