@@ -14,9 +14,7 @@
                  NEWS - CLASSIFIER
             </div>
             <div class="bmwrapper">
-                <a class="bm" href="index.jsp?var=build">BUILD MODEL</a> 
-                or 
-                <a class="bm" href="index.jsp?var=load">LOAD MODEL</a> 
+                <a class="bm" href="index.jsp?var=build">BUILD MODEL</a>
             </div>
             <hr>
             <div class="left">
@@ -24,12 +22,15 @@
                     <br/><input type = "text" name="judul" placeholder="Judul" class="underlined"/>
                    <br/><label for="konten"></label><TEXTAREA class="underlined" NAME="konten" ROWS="5" COLS="25" id="konten" placeholder="Konten"></TEXTAREA>
                    <br/><br/>
+                    <input type="submit" value="Classify from text" class="submit"/>
+                </form>
+                <form action="" method="post">
                   <h2>Browse File : </h2> 
                     <input type="file" value="Browse Dir" class="browse"/>
                   <br/><br/>
-                  <input type="submit" value="Classify from text" class="submit"/>
+                  <input  type="submit" value="Classify from file" class="submit"/>
                </form>
-                <input  type="submit" value="Classify from file" class="submit"/>
+                
             </div>
             
             <% 
@@ -53,6 +54,9 @@
                 }
                 String judul = request.getParameter("judul");
                 String article = request.getParameter("konten");
+//                if(article.indexOf("\n")>=0){
+//                    article = article.replace("\n", " ");
+//                }
 //                out.println(judul);
 //                out.println(article);
                 if(judul!=null){
