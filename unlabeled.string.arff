@@ -1,0 +1,8 @@
+@relation QueryResult-weka.filters.unsupervised.attribute.NominalToString-C1-2
+
+@attribute FULL_TEXT string
+@attribute JUDUL string
+@attribute LABEL {Pendidikan,Politik,'Hukum dan Kriminal','Sosial Budaya',Olahraga,'Teknologi dan Sains',Hiburan,'Bisnis dan Ekonomi',Kesehatan,'Bencana dan Kecelakaan'}
+
+@data
+'mati','mati',Politik
