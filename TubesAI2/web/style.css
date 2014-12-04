@@ -8,13 +8,22 @@ and open the template in the editor.
     Author     : ASUS
 */
 /*@import url(http://fonts.googleapis.com/css?family=Lobster+Two);*/
+@font-face{
+	font-family: logofont;
+	src:url('NapoleonDemo.ttf');
+}
+@font-face{
+	font-family: cntn;
+	src:url('Klarissa.ttf');
+}
 html {
     width:100%;
     height:100%;
-    background-image: url('bg.jpg');
-    background-repeat: no-repeat;
+    /*background-image: url('bg.jpg');*/
+    background-repeat: repeat;
     background-attachment: fixed;   
     background-position: left;
+    font-family: logofont;
 }
 
 input,textarea
@@ -42,24 +51,30 @@ textarea {
     height:45%;
 }
 .logo{
-    font-size:70px;
-    margin-bottom: 4%;
+    font-size:80px;
+    margin-top:3%;
+    margin-bottom: 1%;
     /*font-family: 'Lobster Two', cursive;*/
+    font-family: logofont;
+    text-align: center;
 }
 #wrap {
  /*   text-align:center;*/
-    margin-left:15%;
+    margin-left:5%;
+    width: 90%;
+}
+.left{
+    position: absolute;
+    width: 65%;
+    margin-left: 0%;
     
 }
-.whitebg{
-    margin-left: 20%;
-    width:40%;
-    height:100%;
-    background-color: #ffffff;
-    opacity:0.2;
-}
-.whitebg p {
-    color:#000000;
+
+.right{
+    position: absolute;
+    color: black;
+    width: 35%;
+    right:0%;
 }
 
 body {
@@ -69,13 +84,13 @@ body {
 input.underlined ,textarea.underlined
 {
    border:0;
-   border-bottom:solid 1px #000;
+   border-bottom:solid 1px   #000;
    outline:none; /* prevents textbox highlight in chrome */
 }
 
 input.submit{
-    margin-left:30%;
-    font-size: 25px;
+    /*margin-left:30%;*/
+    font-size: 15px;
     padding:0.5%; 
     width:15%;
     background-color: black;
@@ -90,7 +105,7 @@ input.submit{
     font-size:17px;
 }
 .result1 {
-    margin-top: 20%;
+    margin-top: 5%;
     font-size:30px;
 }
 .result2{
@@ -100,19 +115,42 @@ input.submit{
     font-size:30px;
 }
 .change > button{
-    margin-top: 1%;
-    font-size:25px;
+    font-size: 15px;
+    padding:0.5%; 
+    width:50%;
+    background-color: black;
+    color:white;
+    -webkit-border-radius: 5%;
 }
 
 opsi > select {
     margin-top: 1%;
-    width:12%;
+    width:50%;
     font-size : 18px;
 }
 opsi{
     font-size:30px;
 }
 
-.change > button {
-    
+.bm{
+    margin-top:1%;
+    text-decoration: none;
+    font-size:35px;
+    color:black;
+}
+.bm:hover {
+    color:brown;
+}
+.orr{
+    font-size:25px;
+    margin-left : 5%;
+    margin-right : 5%;
+
+}
+.bmwrapper{
+    margin-top:1%;
+    margin-bottom: 3%;
+    font-size:15px;
+    font-family: logofont;
+    text-align: center;
 }
