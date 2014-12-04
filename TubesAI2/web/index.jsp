@@ -1,3 +1,4 @@
+<%@page import="java.util.Vector"%>
 <%@page import="wekaexplorer.WekaExplorer"%>
 <%@page import="weka.core.Instances"%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
@@ -24,9 +25,9 @@
                    <br/><br/>
                     <input type="submit" value="Classify from text" class="submit"/>
                 </form>
-                <form action="" method="post">
+                <form action="index.jsp" method="post">
                   <h2>Browse File : </h2> 
-                    <input type="file" value="Browse Dir" class="browse"/>
+                    <input type="file" id="file" name="file" class="browse"/>
                   <br/><br/>
                   <input  type="submit" value="Classify from file" class="submit"/>
                </form>
@@ -40,38 +41,56 @@
                 if (act!=null){
                     if (act.equalsIgnoreCase("build")){
                         Instances data2 = W.getDataFromDB("SELECT FULL_TEXT,JUDUL,LABEL FROM artikel NATURAL JOIN artikel_kategori_verified NATURAL JOIN kategori");
-                        W.PrintToARFF(data2, "D:\\dataset.arff");
-                        W.LoadDataset("D:\\dataset.arff");
+                        W.PrintToARFF(data2, "C:\\Users\\Stephen\\Documents\\kuliah\\dataset.arff");
+                        W.LoadDataset("C:\\Users\\Stephen\\Documents\\kuliah\\dataset.arff");
 
                         Instances dataTraining = W.getFilterNominalToString(W.getdata());
-                        W.PrintToARFF(dataTraining, "D:\\dataset.string.arff");
+                        W.PrintToARFF(dataTraining, "C:\\Users\\Stephen\\Documents\\kuliah\\dataset.string.arff");
                         W.setClassifier(W.getClassifierFiltered(dataTraining));
-                        W.PrintModel("D:\\model.model");
+                        W.PrintModel("C:\\Users\\Stephen\\Documents\\kuliah\\model.model");
                     }
                     if(act.equalsIgnoreCase("load")){
-                        W.setClassifier(W.LoadModel("D:\\model.model"));
+                        W.setClassifier(W.LoadModel("C:\\Users\\Stephen\\Documents\\kuliah\\model.model"));
                     }
                 }
                 String judul = request.getParameter("judul");
                 String article = request.getParameter("konten");
-//                if(article.indexOf("\n")>=0){
-//                    article = article.replace("\n", " ");
-//                }
-//                out.println(judul);
-//                out.println(article);
+                String file = request.getParameter("file");
+                
                 if(judul!=null){
-                    System.out.println("masuk");
-                        W.setClassifier(W.LoadModel("D:\\model.model"));
-                        System.out.println("article: " + article);
-                        System.out.println("judul: " + judul);
-                        W.readInput(judul, article, "D:\\unlabeled.string.arff");
+                    
+                    article = article.replaceAll("[\n\r\t]", " ");
+                    
+                    W.setClassifier(W.LoadModel("C:\\Users\\Stephen\\Documents\\kuliah\\model.model"));
+                    //System.out.println("article: " + article);
+                    //System.out.println("judul: " + judul);
+                    W.readInput(judul, article, "C:\\Users\\Stephen\\Documents\\kuliah\\unlabeled.string.arff");
 
-                        W.LoadFromFile("D:\\unlabeled.string.arff", true);
-                        Instances dataUnlabeled=W.getUnlabeled();
+                    W.LoadFromFile("C:\\Users\\Stephen\\Documents\\kuliah\\unlabeled.string.arff", true);
+                    Instances dataUnlabeled=W.getUnlabeled();
 
-                        // Test data unlabeled
-                        System.out.println("classifying data............");
-                        W.ClassifyInstances(W.getClassifier(),dataUnlabeled);
+                    // Test data unlabeled
+                    //System.out.println("classifying data............");
+                    W.ClassifyInstances(W.getClassifier(),dataUnlabeled);
+                    
+                    Cookie cookiejudul = new Cookie("judul",judul);
+                    cookiejudul.setMaxAge(60*60*2);
+                    response.addCookie(cookiejudul);
+                    Cookie cookiearticle = new Cookie("article",article);
+                    cookiearticle.setMaxAge(60*60*2);
+                    response.addCookie(cookiearticle);
+                }
+                else if(file!=null)
+                {
+                    file = application.getRealPath("/").replace("\\", "\\\\") + file;
+                    W.setClassifier(W.LoadModel("C:\\Users\\Stephen\\Documents\\kuliah\\model.model"));
+                    W.loadCSV(file);
+                    W.CSVtoARFF(W.getdata(), application.getRealPath("/").replace("\\", "\\\\") + "unlabeledcsv.arff");
+                    W.LoadUnkownLabel(application.getRealPath("/").replace("\\", "\\\\") + "unlabeledcsv.arff");
+                    
+                    Instances dataUnlabeled=W.getUnlabeled();
+                    Instances labeled = W.ClassifyCSVInstances(W.getClassifier(),dataUnlabeled);
+                    W.ARFFtoCSV(labeled, application.getRealPath("/").replace("\\", "\\\\") + "output.csv");
                 }
         %>
             
@@ -139,11 +158,27 @@
                                    val = "\'Bencana dan Kecelakaan\'"; break;
                            }
                            if(getParam>0){
-                               article = "b";
-                               judul = "a";
-                               String query1= "INSERT INTO `news_aggregator`.`artikel` (`ID_ARTIKEL`, `HTML`, `FULL_TEXT`, `TGL_TERBIT`, `TGL_CRAWL`, `JUDUL`, `URL`, `INFO_WHAT`, `INFO_WHERE`, `INFO_WHY`, `INFO_WHO`, `INFO_WHEN`, `INFO_HOW`) VALUES(NULL, NULL, \""+ article +"\", NULL, NULL, \""+ judul +"\", NULL, NULL, NULL, NULL, NULL, NULL, NULL);";
+                               // Mencari cookie judul dan article yang telah disimpan
+                               int i=0;
+                               Cookie[] cookies = request.getCookies();
+                               String judulfromcookies = "";
+                               String articlefromcookies = "";
+                               while(i<cookies.length) {
+                                   if(cookies[i].getName().equalsIgnoreCase("judul")) {
+                                       judulfromcookies = cookies[i].getValue();
+                                   }
+                                   else if(cookies[i].getName().equalsIgnoreCase("article")) {
+                                       articlefromcookies = cookies[i].getValue();
+                                   }
+                                   i++;
+                               }
+                               judulfromcookies = judulfromcookies.replace("\"", "");
+                               articlefromcookies = articlefromcookies.replace("\"", "");
+                               
+                               String query1= "INSERT INTO `news_aggregator`.`artikel` (`ID_ARTIKEL`, `HTML`, `FULL_TEXT`, `TGL_TERBIT`, `TGL_CRAWL`, `JUDUL`, `URL`, `INFO_WHAT`, `INFO_WHERE`, `INFO_WHY`, `INFO_WHO`, `INFO_WHEN`, `INFO_HOW`) VALUES(NULL, NULL, \""+ articlefromcookies +"\", NULL, NULL, \""+ judulfromcookies +"\", NULL, NULL, NULL, NULL, NULL, NULL, NULL);";
+                               System.out.println(query1);
                                W.getDataFromDB(query1);
-                               int idartikel=W.getIDdata("SELECT ID_ARTIKEL FROM artikel WHERE JUDUL=\""+ judul +"\"");
+                               int idartikel=W.getIDdata("SELECT ID_ARTIKEL FROM artikel WHERE JUDUL=\""+ judulfromcookies +"\"");
                                int idkategori=W.getIDdata("SELECT ID_KELAS FROM kategori WHERE LABEL= " + val + "");
                                String query="INSERT INTO artikel_kategori_verified (`ID_ARTIKEL`,`ID_KELAS`) VALUES ("+idartikel+","+idkategori+")";
                                W.getDataFromDB(query);

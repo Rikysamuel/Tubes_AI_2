@@ -194,13 +194,24 @@ public class WekaExplorer {
     public void ClassifyInstances(Classifier classifier, Instances test) throws Exception{
 //        test = getFilterToWordVector(test);
         System.out.println("clasifying test data.............");
-        for (int i = 0; i < test.numInstances(); i++) {
+        for (int i = 0; i < test.size(); i++) {
            double pred = classifier.classifyInstance(test.instance(i));
            System.out.print("ID: " + test.instance(i).value(0));
            System.out.print(", actual: " + test.classAttribute().value((int) test.instance(i).classValue()));
            System.out.println(", predicted: " + test.classAttribute().value((int) pred));
            prediction = test.classAttribute().value((int) pred);
         }
+    }
+    
+    public Instances ClassifyCSVInstances(Classifier classifier, Instances test) throws Exception{
+        Instances labeled = new Instances(test);
+        for (int i = 0; i < unlabeled.numInstances(); ++i) {
+            try {
+                double clsLabel = classifier.classifyInstance(test.instance(i));
+                labeled.instance(i).setClassValue(clsLabel);
+            } catch (Exception ex) {}
+        }
+        return labeled;
     }
     
     // Method untuk mmebuat instance menjadi terfilter yang akan digunakan untuk kategorisasi
@@ -369,32 +380,12 @@ public class WekaExplorer {
     public void datatoARFF(Vector<String> title, Vector<String> content, String filepath) throws IOException{
         try (FileWriter fw = new FileWriter(filepath); PrintWriter pw = new PrintWriter(fw)) {
             
-            pw.println("@relation QueryResult");
+            pw.println("@relation QueryResult-weka.filters.unsupervised.attribute.NominalToString-C1-2");
             pw.println("");
             
-            pw.print("@attribute full_text {");
-            for(int i=0;i<content.size()-1;i++)
-            {
-                pw.print("\'");
-                pw.print(content.get(i));
-                pw.print("\',");
-            }
-            pw.print("\'");
-            pw.print(content.get(content.size()-1));
-            pw.println("'}");
-            
-            pw.print("@attribute judul {");
-            for(int i=0;i<title.size()-1;i++)
-            {
-                pw.print("\'");
-                pw.print(title.get(i));
-                pw.print("\',");
-            }
-            pw.print("\'");
-            pw.print(title.get(title.size()-1));
-            pw.println("'}");
-            
-            pw.println("@attribute label {Pendidikan,Politik,'Hukum dan Kriminal','Sosial Budaya',Olahraga,'Teknologi dan Sains',Hiburan,'Bisnis dan Ekonomi',Kesehatan,'Bencana dan Kecelakaan'}");
+            pw.println("@attribute FULL_TEXT string");
+            pw.println("@attribute JUDUL string");
+            pw.println("@attribute LABEL {Pendidikan,Politik,'Hukum dan Kriminal','Sosial Budaya',Olahraga,'Teknologi dan Sains',Hiburan,'Bisnis dan Ekonomi',Kesehatan,'Bencana dan Kecelakaan'}");
             
             pw.println("");
             
@@ -406,7 +397,7 @@ public class WekaExplorer {
                 pw.print("\',");
                 pw.print("\'");
                 pw.print(title.get(i));
-                pw.println("','?'");
+                pw.println("',Politik");
             }
             
             pw.flush();
@@ -416,10 +407,10 @@ public class WekaExplorer {
     public void datatoCSV(Vector<String> title, Vector<String> content, Vector<String> label, String filepath) throws IOException {
         try (FileWriter fw = new FileWriter(filepath); PrintWriter pw = new PrintWriter(fw)) {
             
-            pw.println("full_text,judul,label");
+            pw.println("FULL_TEXT,JUDUL,LABEL");
             for(int i=0;i<title.size();i++)
             {
-                pw.println("'"+content.get(i)+"','"+title.get(i)+"','"+label.get(i)+"'");
+                pw.println("\""+content.get(i)+"\",\""+title.get(i)+"\",\""+label.get(i)+"\"");
             }
             
             pw.flush();
