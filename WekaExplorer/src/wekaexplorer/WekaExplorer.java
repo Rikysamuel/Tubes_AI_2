@@ -157,17 +157,29 @@ public class WekaExplorer {
     }
     
     // Method untuk Supplied Test Set
-    public FilteredClassifier getClassifierFiltered(Instances train) throws Exception{
+    public FilteredClassifier getClassifierFiltered(Instances train, Instances test) throws Exception{
         NaiveBayes NB = new NaiveBayes();
         FilteredClassifier FC = new FilteredClassifier();
         
         // Set train dan set menjadi word vector
         train = getFilterToWordVector(train);
-        System.out.println(train.numInstances());
+        test = getFilterToWordVector(test);
+//        System.out.println(train.numInstances());
         
         // Membangun model dan melakukan test
         FC.setClassifier(NB);
         FC.buildClassifier(train);
+        
+        System.out.println("clasifying test data.............");
+        Instances prediction = new Instances(test);
+        for (int i = 0; i < test.numInstances(); i++) {
+            System.out.println("ok");
+           double pred = FC.classifyInstance(test.instance(i));
+           System.out.print("ID: " + test.instance(i).value(0));
+           System.out.print(", actual: " + test.classAttribute().value((int) test.instance(i).classValue()));
+           System.out.println(", predicted: " + prediction.classAttribute().value((int) pred));
+        }
+        
         return FC;
     }
     
@@ -522,21 +534,17 @@ public class WekaExplorer {
         }
     }
     
-    public void readInput(String title, String content, String filename) throws IOException{
+   public void readInput(String title, String content, String filename) throws IOException{
         try (FileWriter fw = new FileWriter(filename); PrintWriter pw = new PrintWriter(fw)) {
             
-            pw.println("@relation QueryResult");
+            pw.println("@relation QueryResult-weka.filters.unsupervised.attribute.NominalToString-C1-2");
             pw.println("");
             
-            pw.print("@attribute FULL_TEXT {'");
-            pw.print(content);
-            pw.println("'}");
+            pw.println("@attribute FULL_TEXT string");
             
-            pw.print("@attribute JUDUL {'");
-            pw.print(title);
-            pw.println("'}");
+            pw.println("@attribute JUDUL string");
             
-            pw.println("@attribute LABEL {'?'}");
+            pw.println("@attribute LABEL {Pendidikan,Politik,'Hukum dan Kriminal','Sosial Budaya',Olahraga,'Teknologi dan Sains',Hiburan,'Bisnis dan Ekonomi',Kesehatan,'Bencana dan Kecelakaan'}");
             
             pw.println("");
             
@@ -546,67 +554,69 @@ public class WekaExplorer {
             pw.print("','");
             pw.print(title);
             pw.print("'");
-            pw.print(",'?'");
+            pw.print(",Politik");
             
             pw.flush();
         }
-     } 
+    } 
     // Program Utama
     public static void main(String[] args) throws Exception {
 //        
         WekaExplorer W = new WekaExplorer();
         
         //Normal
-        // Mengambil data dari DB dan menulis ke file
-//        System.out.println("fetch data set from DB............");
-//        Instances data2 = W.getDataFromDB("SELECT FULL_TEXT,JUDUL,LABEL FROM artikel NATURAL JOIN artikel_kategori_verified NATURAL JOIN kategori");
-//        System.out.println("printing data set to ARFF file............");
-//        W.PrintToARFF(data2, "dataset.arff");
-//        
-////         Meload data set dari file eksternal
-//        System.out.println("load data set............");
-//        W.LoadDataset("dataset.arff");
-////        
-//        // Membuat filter untuk merubah format data training
-//        System.out.println("set filter nominal to string to data set.........");
-//        Instances dataTraining = W.getFilterNominalToString(W.getdata());
-//        System.out.println("saving to string format..............");
-//        W.PrintToARFF(dataTraining, "dataset.string.arff");
-//        
+//         Mengambil data dari DB dan menulis ke file
+        System.out.println("fetch data set from DB............");
+        Instances data2 = W.getDataFromDB("SELECT FULL_TEXT,JUDUL,LABEL FROM artikel NATURAL JOIN artikel_kategori_verified NATURAL JOIN kategori");
+        System.out.println("printing data set to ARFF file............");
+        W.PrintToARFF(data2, "dataset.arff");
+        
+//         Meload data set dari file eksternal
+        System.out.println("load data set............");
+        W.LoadDataset("dataset.arff");
+        
+        // Membuat filter untuk merubah format data training
+        System.out.println("set filter nominal to string to data set.........");
+        Instances dataTraining = W.getFilterNominalToString(W.getdata());
+        System.out.println("saving to string format..............");
+        W.PrintToARFF(dataTraining, "dataset.string.arff");
+        
 //        Instances data3 = W.getDataFromDB("SELECT FULL_TEXT,JUDUL,'?' as LABEL FROM artikel where id_artikel=30610");
 //        W.PrintToARFF(data3, "unlabeled.arff");
-//        String article="KOMPAS.com - Smartphone premium HTC terbaru akan meluncur sekitar tiga hingga empat bulan lagi. Sesuai dengan tradisi, perangkat tersebut kemungkinan akan mengusung nama HTC One M9. \\n\\nSelain M9, HTC juga disebutkan akan membuat varian lainnya, yaitu M9 Prime. Kini, bocoran pertama seputar spesifikasi smartphone itu telah beredar di internet.\\n\\nSitus Android Headline pada Jumat (28/11/2014), merilis spesifikasi smartphone HTC yang berada di jajaran paling atas itu. Dikutip oleh KompasTekno, M9 Prime akan mengusung layar ukuran 5,5 inci dengan resolusi 2K/QHD 2560 x 1440 piksel.\\n\\nSelain memiliki resolusi layar tinggi, M9 Prime juga akan dibekali dengan prosesor terbaru buatan Qualcomm, yaitu Snapdragon 805 dengan baterai kapasitas 3500 mAh.\\n\\nKesalahan HTC yang hanya menyertakan RAM 2 GB dalam M8 tahun lalu nampaknya akan dibayar dengan memberikan kapasitas RAM lebih tinggi lagi, yaitu 3 GB dalam M9 Prime.\\n\\nDari segi kamera, HTC One M9 Prime dikabarkan akan mengusung kamera resolusi 16 megapiksel dengan sistem stabilisasi optik. \\n\\nHTC pernah bekerja sama dengan Beat audio untuk memperkuat speaker dalam smartphone buatannya. Speaker buatan BoomSound pun juga telah digunakan dalam HTC One M8.\\n\\nKini, vendor Taiwan tersebut kabarnya akan menggandeng raksasa audio lainnya, Bose untuk memperkuat sistem audio dalam M9 Prime. HTC One M9 dijadwalkan dirilis di ajang Mobile World Congress 2015 di Barcelona pada 2 Maret mendatang.";
-//        String judul = "Bocoran Pertama Android HTC M9 Prime";
+        String article="KOMPAS.com - Smartphone premium HTC terbaru akan meluncur sekitar tiga hingga empat bulan lagi. Sesuai dengan tradisi, perangkat tersebut kemungkinan akan mengusung nama HTC One M9. \\n\\nSelain M9, HTC juga disebutkan akan membuat varian lainnya, yaitu M9 Prime. Kini, bocoran pertama seputar spesifikasi smartphone itu telah beredar di internet.\\n\\nSitus Android Headline pada Jumat (28/11/2014), merilis spesifikasi smartphone HTC yang berada di jajaran paling atas itu. Dikutip oleh KompasTekno, M9 Prime akan mengusung layar ukuran 5,5 inci dengan resolusi 2K/QHD 2560 x 1440 piksel.\\n\\nSelain memiliki resolusi layar tinggi, M9 Prime juga akan dibekali dengan prosesor terbaru buatan Qualcomm, yaitu Snapdragon 805 dengan baterai kapasitas 3500 mAh.\\n\\nKesalahan HTC yang hanya menyertakan RAM 2 GB dalam M8 tahun lalu nampaknya akan dibayar dengan memberikan kapasitas RAM lebih tinggi lagi, yaitu 3 GB dalam M9 Prime.\\n\\nDari segi kamera, HTC One M9 Prime dikabarkan akan mengusung kamera resolusi 16 megapiksel dengan sistem stabilisasi optik. \\n\\nHTC pernah bekerja sama dengan Beat audio untuk memperkuat speaker dalam smartphone buatannya. Speaker buatan BoomSound pun juga telah digunakan dalam HTC One M8.\\n\\nKini, vendor Taiwan tersebut kabarnya akan menggandeng raksasa audio lainnya, Bose untuk memperkuat sistem audio dalam M9 Prime. HTC One M9 dijadwalkan dirilis di ajang Mobile World Congress 2015 di Barcelona pada 2 Maret mendatang.";
+        String judul = "Bocoran Pertama Android HTC M9 Prime";
         
-//        System.out.println("find article file............");
-//        W.readInput(judul, article, "unlabeled.arff");
-//        
-//        System.out.println("load test data..................");
-//        W.LoadUnkownLabel("unlabeled.arff");
+        System.out.println("find article file............");
+        W.readInput(judul, article, "unlabeled.string.arff");
+        
+        System.out.println("load test data..................");
+        W.LoadUnkownLabel("unlabeled.arff");
         // Membuat filter untuk merubah format data unlabeled
 //        System.out.println("set test filtered...................");
-//        Instances dataUnlabeled = W.getFilterNominalToStringTest(W.getUnlabeled()); 
+        Instances dataUnlabeled = W.getUnlabeled(); 
 //        System.out.println("save unlabeled to string...............");
 //        W.PrintToARFF(dataUnlabeled, "unlabeled.string.arff");
 //        
-//        // Membuat model dan Mengklasifikasikan data yang belum berlabel
-//        System.out.println("building classifier..............");
+        // Membuat model dan Mengklasifikasikan data yang belum berlabel
+        System.out.println("building classifier..............");
+        W.getClassifierFiltered(dataTraining, dataUnlabeled);
 //        W.setClassifier(W.getClassifierFiltered(dataTraining));
-//        
+        
 //        // Menyimpan model
 //        System.out.println("Saving model......................");
 //        W.PrintModel("model.model");
         
         
-        W.LoadFromFile("unlabeled.string.arff", true);
-        Instances dataUnlabeled=W.getUnlabeled();
+//        W.LoadFromFile("unlabeled.string.arff", true);
+//        Instances dataUnlabeled=W.getUnlabeled();
+//        System.out.println(dataUnlabeled);
                 
-        System.out.println("loading model file................");
-        W.setClassifier(W.LoadModel("model.model"));
+//        System.out.println("loading model file................");
+//        W.setClassifier(W.LoadModel("model.model"));
         // Test data unlabeled
         
-        System.out.println("classifying data............");
-        W.ClassifyInstances(dataUnlabeled);
+//        System.out.println("classifying data............");
+//        W.ClassifyInstances(dataUnlabeled);
         
           //rebuild
 //        String article="KOMPAS.com - Smartphone premium HTC terbaru akan meluncur sekitar tiga hingga empat bulan lagi. Sesuai dengan tradisi, perangkat tersebut kemungkinan akan mengusung nama HTC One M9. \\n\\nSelain M9, HTC juga disebutkan akan membuat varian lainnya, yaitu M9 Prime. Kini, bocoran pertama seputar spesifikasi smartphone itu telah beredar di internet.\\n\\nSitus Android Headline pada Jumat (28/11/2014), merilis spesifikasi smartphone HTC yang berada di jajaran paling atas itu. Dikutip oleh KompasTekno, M9 Prime akan mengusung layar ukuran 5,5 inci dengan resolusi 2K/QHD 2560 x 1440 piksel.\\n\\nSelain memiliki resolusi layar tinggi, M9 Prime juga akan dibekali dengan prosesor terbaru buatan Qualcomm, yaitu Snapdragon 805 dengan baterai kapasitas 3500 mAh.\\n\\nKesalahan HTC yang hanya menyertakan RAM 2 GB dalam M8 tahun lalu nampaknya akan dibayar dengan memberikan kapasitas RAM lebih tinggi lagi, yaitu 3 GB dalam M9 Prime.\\n\\nDari segi kamera, HTC One M9 Prime dikabarkan akan mengusung kamera resolusi 16 megapiksel dengan sistem stabilisasi optik. \\n\\nHTC pernah bekerja sama dengan Beat audio untuk memperkuat speaker dalam smartphone buatannya. Speaker buatan BoomSound pun juga telah digunakan dalam HTC One M8.\\n\\nKini, vendor Taiwan tersebut kabarnya akan menggandeng raksasa audio lainnya, Bose untuk memperkuat sistem audio dalam M9 Prime. HTC One M9 dijadwalkan dirilis di ajang Mobile World Congress 2015 di Barcelona pada 2 Maret mendatang.','Bocoran Pertama Android HTC M9 Prime";

@@ -1,6 +1,11 @@
 package wekaexplorer;
 
+import com.mysql.jdbc.Connection;
 import java.io.*;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Random;
 import java.util.Vector;
 import weka.classifiers.Classifier;
@@ -23,7 +28,7 @@ public class WekaExplorer {
     private Instances data; //traning data
     private Instances unlabeled; //testing data
     private Classifier classifier;
-    public String prediction;
+    private String prediction;
     NominalToString NTS = new NominalToString();
 	
     // Method untuk mengset data training
@@ -49,9 +54,21 @@ public class WekaExplorer {
     {
         LoadFromFile(file,false);
     }
+
+    public Classifier getClassifier() {
+        return classifier;
+    }
+
+    public void setPrediction(String prediction) {
+        this.prediction = prediction;
+    }
+
+    public String getPrediction() {
+        return prediction;
+    }
     
     // Mengload file .arff (baik data set maupun instance yang ingin diklasifikasi)
-    private void LoadFromFile(String file, boolean unknown)
+    public void LoadFromFile(String file, boolean unknown)
     {
        try{
             BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -115,12 +132,12 @@ public class WekaExplorer {
     }
     
     // Method untuk mengklasifikasikan sebuah instance
-    public Instances Classify()
+    public Instances Classify(Instances test)
     {
-        Instances labeled = new Instances(this.unlabeled);
+        Instances labeled = new Instances(test);
         for (int i = 0; i < unlabeled.numInstances(); ++i) {
             try {
-                double clsLabel = classifier.classifyInstance(unlabeled.instance(i));
+                double clsLabel = classifier.classifyInstance(test.instance(i));
                 labeled.instance(i).setClassValue(clsLabel);
             } catch (Exception ex) {}
         }
@@ -149,29 +166,45 @@ public class WekaExplorer {
     }
     
     // Method untuk Supplied Test Set
-    public FilteredClassifier getClassifierFiltered(Instances train, Instances test) throws Exception{
+    public FilteredClassifier getClassifierFiltered(Instances train) throws Exception{
         NaiveBayes NB = new NaiveBayes();
         FilteredClassifier FC = new FilteredClassifier();
         
+        StringToWordVector STW = getFilterToWordVector(train);
+        System.out.println("testdulu");
+        STW.setInputFormat(train);
+        System.out.println("test");
         // Set train dan set menjadi word vector
-        train = getFilterToWordVector(train);
-        test = getFilterToWordVector(test);
-
+//        train = getFilterToWordVector(train);
+        System.out.println(train.numInstances());
+        
         // Membangun model dan melakukan test
         FC.setClassifier(NB);
+        FC.setFilter(STW);
         FC.buildClassifier(train);
+        
+//        System.out.println("Building evaluation.................");
+//        Evaluation eval = new Evaluation(train);
+//        eval.crossValidateModel(FC.getClassifier(), train, 10, new Random(1));
+//        System.out.println("Printing results..........................");
+//        System.out.println(eval.toMatrixString());
+        return FC;
+    }
+    
+    public void ClassifyInstances(Classifier classifier, Instances test) throws Exception{
+//        test = getFilterToWordVector(test);
+        System.out.println("clasifying test data.............");
         for (int i = 0; i < test.numInstances(); i++) {
-           double pred = FC.classifyInstance(test.instance(i));
+           double pred = classifier.classifyInstance(test.instance(i));
            System.out.print("ID: " + test.instance(i).value(0));
            System.out.print(", actual: " + test.classAttribute().value((int) test.instance(i).classValue()));
            System.out.println(", predicted: " + test.classAttribute().value((int) pred));
            prediction = test.classAttribute().value((int) pred);
         }
-        return FC;
     }
     
     // Method untuk mmebuat instance menjadi terfilter yang akan digunakan untuk kategorisasi
-    public Instances getFilterToWordVector(Instances train) throws Exception
+    public StringToWordVector getFilterToWordVector(Instances train) throws Exception
     {
         StringToWordVector filter = new StringToWordVector();
         filter.setDoNotOperateOnPerClassBasis(true);
@@ -184,16 +217,14 @@ public class WekaExplorer {
         options[0] = "-R";
         options[1] = "1-2";
         filter.setOptions(options);
-        filter.setInputFormat(train);
         
         String delimiters = " \r\n\t.,;:\"\'()?!-¿¡+*&#$%\\/=<>[]`@~0123456789";
         wt.setDelimiters(delimiters);
         filter.setTokenizer(wt);
-        filter.setStopwords(new File("stopwords.txt"));
+        filter.setStopwords(new File("D:\\stopwords.txt"));
         filter.setWordsToKeep(100000);
         
-        train = Filter.useFilter(train, filter);
-        return train;
+        return filter;
     }
     
     // Method untuk membuat data train input terfilter menjadi string
@@ -275,6 +306,32 @@ public class WekaExplorer {
         return returnData;
     }
     
+    public int getIDdata(String _query) throws SQLException, ClassNotFoundException{
+        ResultSet rs;
+        Connection con;
+        int id=0;
+        
+        Class.forName("com.mysql.jdbc.Driver");
+        String url = "jdbc:mysql://localhost/news_aggregator";
+        String user = "root";
+        String password = "";
+        con = (Connection) DriverManager.getConnection(url,user,password);
+        
+        try {
+          Statement stmt = con.createStatement();
+          rs = stmt.executeQuery(_query);
+
+          while(rs.next()){
+              id = rs.getInt(1);
+              System.out.println(id);
+           }
+          con.close();
+        } catch (SQLException e) {
+           System.err.println(e);
+        }
+        return id;
+    }
+    
     public void readDataTrain(String File, String article,String judul, String LABEL) throws FileNotFoundException, IOException{
         try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(File, true)))) {
             out.print("\n'" + article + "','"+judul + "',"+LABEL);
@@ -282,8 +339,7 @@ public class WekaExplorer {
             System.err.println(e);
         }
     }
-    
-// Mengload file csv dan mengembalikan Instances di dalamnya
+    // Mengload file csv dan mengembalikan Instances di dalamnya
     public void loadCSV(String filename)
     {
         CSVLoader csv = new CSVLoader();
@@ -488,18 +544,14 @@ public class WekaExplorer {
     public void readInput(String title, String content, String filename) throws IOException{
         try (FileWriter fw = new FileWriter(filename); PrintWriter pw = new PrintWriter(fw)) {
             
-            pw.println("@relation QueryResult");
+            pw.println("@relation QueryResult-weka.filters.unsupervised.attribute.NominalToString-C1-2");
             pw.println("");
             
-            pw.print("@attribute FULL_TEXT {'");
-            pw.print(content);
-            pw.println("'}");
+            pw.println("@attribute FULL_TEXT string");
             
-            pw.print("@attribute JUDUL {'");
-            pw.print(title);
-            pw.println("'}");
+            pw.println("@attribute JUDUL string");
             
-            pw.println("@attribute LABEL {'?'}");
+            pw.println("@attribute LABEL {Pendidikan,Politik,'Hukum dan Kriminal','Sosial Budaya',Olahraga,'Teknologi dan Sains',Hiburan,'Bisnis dan Ekonomi',Kesehatan,'Bencana dan Kecelakaan'}");
             
             pw.println("");
             
@@ -509,9 +561,9 @@ public class WekaExplorer {
             pw.print("','");
             pw.print(title);
             pw.print("'");
-            pw.print(",'?'");
+            pw.print(",Politik");
             
             pw.flush();
         }
-    } 
+    }
 }

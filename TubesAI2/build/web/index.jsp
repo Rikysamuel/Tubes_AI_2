@@ -13,7 +13,7 @@
             <div class="logo">
                  News - Classifier
             </div>
-                <form action="result.jsp" method="post">
+                <form action="result.jsp?select-opt=0&id=DB" method="post">
                     <br/><input type = "text" name="judul" placeholder="Judul" id="judul" class="underlined"/>
                     <br/><input type = "text" name="konten" placeholder="Konten" id="artikel" class="underlined"/>
                    <br/><br/>

@@ -12,13 +12,19 @@
 <html>
     <head>
         <% 
-//            WekaExplorer W = new WekaExplorer();
-//            Instances data2 = W.getDataFromDB("SELECT FULL_TEXT,JUDUL,LABEL FROM artikel NATURAL JOIN artikel_kategori_verified NATURAL JOIN kategori");
-//            W.PrintToARFF(data2, "D:\\dataset.arff");
-//            W.LoadDataset("D:\\dataset.arff");
-//
-//            Instances dataTraining = W.getFilterNominalToString(W.getdata());
-//            W.PrintToARFF(dataTraining, "D:\\dataset.string.arff");
+            WekaExplorer W = new WekaExplorer();
+            String act = request.getParameter("id");
+            if (act.equalsIgnoreCase("DB")){
+                Instances data2 = W.getDataFromDB("SELECT FULL_TEXT,JUDUL,LABEL FROM artikel NATURAL JOIN artikel_kategori_verified NATURAL JOIN kategori");
+                W.PrintToARFF(data2, "D:\\dataset.arff");
+                W.LoadDataset("D:\\dataset.arff");
+
+                Instances dataTraining = W.getFilterNominalToString(W.getdata());
+                W.PrintToARFF(dataTraining, "D:\\dataset.string.arff");
+                W.setClassifier(W.getClassifierFiltered(dataTraining));
+                W.PrintModel("D:\\model.model");
+//                W.setClassifier(W.LoadModel("D:\\model.model"));
+            }
         %>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>Tubes 2 AI | CLASSIFIER </title>
@@ -29,27 +35,30 @@
                 berita termasuk ke dalam kategori : 
             </div>
                 <%
-//                    String article = request.getParameter("konten");
-//                    String judul = request.getParameter("judul");
-//                    W.readInput(judul, article, "D:\\unlabeled.arff");
-//
-//                    W.LoadUnkownLabel("D:\\unlabeled.arff");
-//                    Instances dataUnlabeled = W.getFilterNominalToStringTest(W.getUnlabeled()); 
-//                    W.PrintToARFF(dataUnlabeled, "D:\\unlabeled.string.arff");
-        
-                    // Membuat model dan Mengklasifikasikan data yang belum berlabel
-//                    W.getClassifierFiltered(dataTraining, dataUnlabeled);   
-//                    W.prediction = "Hiburan";
-//                %>
+                    if (act.equalsIgnoreCase("load")){
+                        W.setClassifier(W.LoadModel("D:\\model.model"));
+                    }
+                    String article = request.getParameter("konten");
+                    String judul = request.getParameter("judul");
+                    W.readInput(judul, article, "D:\\unlabeled.string.arff");
+                    
+                    W.LoadFromFile("D:\\unlabeled.string.arff", true);
+                    Instances dataUnlabeled=W.getUnlabeled();
+                    
+                    // Test data unlabeled
+                    System.out.println("classifying data............");
+                    W.ClassifyInstances(W.getClassifier(),dataUnlabeled);
+                %>
            
             <div class="result2">
-                <% // out.println(W.prediction); System.out.println("lewat");%>
+                <% out.println(W.getPrediction());%>
             </div>
             <br/><br/><br/><br/><br/><br/>
-            <form>
+            <form method="get" action="index.jsp">
                 <opsi>
                     Kategori Salah? Kategori seharusnya : 
                     <select name="select-opt">
+                        <option value="0">NONE</option>
                         <option value="1">PENDIDIKAN</option>
                         <option value="2">POLITIK</option>
                         <option value="3">HUKUM DAN KRIMINAL</option>
@@ -90,21 +99,17 @@
                             val = "Kesehatan"; break;
                         case 10:
                             val = "\'Bencana dan Kecelakaan\'"; break;
-                     }
-//                    String query1= "INSERT INTO `news_aggregator`.`artikel` (`ID_ARTIKEL`, `HTML`, `FULL_TEXT`, `TGL_TERBIT`, `TGL_CRAWL`, `JUDUL`, `URL`, `INFO_WHAT`, `INFO_WHERE`, `INFO_WHY`, `INFO_WHO`, `INFO_WHEN`, `INFO_HOW`) VALUES(NULL, NULL, "+ article +", NULL, NULL, "+ judul +", NULL, NULL, NULL, NULL, NULL, NULL, NULL);";
-//                    System.out.println(query1);
-//                    
-//                    String idartikel="SELECT ID_ARTIKEL FROM artikel WHERE JUDUL="+judul+"";
-////                        out.println(val);
-//                    String idkategori="SELECT ID_KELAS FROM kategori WHERE LABEL="+ getParam +"";
-//                    String query="INSERT INTO artikel_kategori_verified (`ID_ARTIKEL`,`ID_KELAS`) VALUES ("+idartikel+","+idkategori+")";
-//                    System.out.println(query);
+                    }
+                    if(getParam>0){
+                        String query1= "INSERT INTO `news_aggregator`.`artikel` (`ID_ARTIKEL`, `HTML`, `FULL_TEXT`, `TGL_TERBIT`, `TGL_CRAWL`, `JUDUL`, `URL`, `INFO_WHAT`, `INFO_WHERE`, `INFO_WHY`, `INFO_WHO`, `INFO_WHEN`, `INFO_HOW`) VALUES(NULL, NULL, \""+ article +"\", NULL, NULL, \""+ judul +"\", NULL, NULL, NULL, NULL, NULL, NULL, NULL);";
+                        W.getDataFromDB(query1);
+                        int idartikel=W.getIDdata("SELECT ID_ARTIKEL FROM artikel WHERE JUDUL=\"Bocoran Pertama Android HTC M9 Prime\"");
+                        int idkategori=W.getIDdata("SELECT ID_KELAS FROM kategori WHERE LABEL= " + val + "");
+                        String query="INSERT INTO artikel_kategori_verified (`ID_ARTIKEL`,`ID_KELAS`) VALUES ("+idartikel+","+idkategori+")";
+                        W.getDataFromDB(query);
+                    }
                  %>
             </div>
         </div>
-        <% 
-       
-        %>
-        
     </body>
 </html>
