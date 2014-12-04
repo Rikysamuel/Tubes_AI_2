@@ -81,40 +81,77 @@
             </div>         
            
             <div class="result2">
-                <% out.println(W.getPrediction());%>
+                <% 
+                    if (W.getPrediction()==null){
+                        out.println("\"?\"");
+                    }else{
+                        out.println(W.getPrediction());
+                    }
+                %>
             </div>
-            <br/><br/><br/><br/><br/><br/>
-            <form method="get" action="index.jsp">
-                <opsi>
-                    KATEGORI SALAH? KATEGORI SEHARUSNYA : 
-                    <select name="select-opt">
-                        <option value="0"></option>
-                        <option value="1">PENDIDIKAN</option>
-                        <option value="2">POLITIK</option>
-                        <option value="3">HUKUM DAN KRIMINAL</option>
-                        <option value="4">SOSIAL BUDAYA</option>
-                        <option value="5">OLAHRAGA</option>
-                        <option value="6">TEKNOLOGI DAN SAINS</option>
-                        <option value="7">HIBURAN</option>
-                        <option value="8">BISNIS DAN EKONOMI</option>
-                        <option value="9">KESEHATAN</option>
-                        <option value="10">BENCANA DAN KECELAKAAN</option>
-                    </select>
-                    <!--<button type="button" value="a"/>re-build model-->
-                </opsi>
-                <!--<br/><input type="submit" value="rebuild"/>-->
+            <br/><br/><br/><br/>
+            <form method="get" action="#">
+                <div class="change"><br>
+                    <opsi>
+                        KATEGORI SALAH? KATEGORI SEHARUSNYA : 
+                        <select name="select-opt">
+                            <option value="0">-----------------------------------</option>
+                            <option value="1">PENDIDIKAN</option>
+                            <option value="2">POLITIK</option>
+                            <option value="3">HUKUM DAN KRIMINAL</option>
+                            <option value="4">SOSIAL BUDAYA</option>
+                            <option value="5">OLAHRAGA</option>
+                            <option value="6">TEKNOLOGI DAN SAINS</option>
+                            <option value="7">HIBURAN</option>
+                            <option value="8">BISNIS DAN EKONOMI</option>
+                            <option value="9">KESEHATAN</option>
+                            <option value="10">BENCANA DAN KECELAKAAN</option>
+                        </select>
+                    </opsi>
+                    <input type="submit" class="submit" value="LEARN"/>
+                </div>
             </form>
-             <div class="change">
-                <BR>
-                <button type="button">TAMBAHKAN KE DALAM BASIS DATA</button>
-                <BR><button type="button">BUAT ULANG MODEL</button>
-            </div>
+            <%
+                     String opt = request.getParameter("select-opt");
+                     if(opt!=null){    
+                            Integer getParam = Integer.parseInt(opt);
+                            String val = null;
+                            switch(getParam){
+                               case 1 : 
+                                   val = "\'Pendidikan\'"; break;
+                               case 2 :
+                                   val = "\'Politik\'"; break;
+                               case 3:
+                                   val = "\'Hukum dan Kriminal\'"; break;
+                               case 4:
+                                   val = "\'Sosial Budaya\'"; break;
+                               case 5:
+                                   val = "\'Olahraga\'"; break;
+                               case 6:
+                                   val = "\'Teknologi dan Sains\'"; break;
+                               case 7:
+                                   val = "\'Hiburan\'"; break;
+                               case 8:
+                                   val = "\'Bisnis dan Ekonomi\'"; break;
+                               case 9:
+                                   val = "\'Kesehatan\'"; break;
+                               case 10:
+                                   val = "\'Bencana dan Kecelakaan\'"; break;
+                           }
+                           if(getParam>0){
+                               article = "b";
+                               judul = "a";
+                               String query1= "INSERT INTO `news_aggregator`.`artikel` (`ID_ARTIKEL`, `HTML`, `FULL_TEXT`, `TGL_TERBIT`, `TGL_CRAWL`, `JUDUL`, `URL`, `INFO_WHAT`, `INFO_WHERE`, `INFO_WHY`, `INFO_WHO`, `INFO_WHEN`, `INFO_HOW`) VALUES(NULL, NULL, \""+ article +"\", NULL, NULL, \""+ judul +"\", NULL, NULL, NULL, NULL, NULL, NULL, NULL);";
+                               W.getDataFromDB(query1);
+                               int idartikel=W.getIDdata("SELECT ID_ARTIKEL FROM artikel WHERE JUDUL=\""+ judul +"\"");
+                               int idkategori=W.getIDdata("SELECT ID_KELAS FROM kategori WHERE LABEL= " + val + "");
+                               String query="INSERT INTO artikel_kategori_verified (`ID_ARTIKEL`,`ID_KELAS`) VALUES ("+idartikel+","+idkategori+")";
+                               W.getDataFromDB(query);
+                           }
+                     }
+            %>
             </div>            
         </div>
-        <% 
-       //     WekaExplorer w = new WekaExplorer();
-        %>
-        
     </body>
 </html>
 
