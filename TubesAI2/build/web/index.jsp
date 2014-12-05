@@ -1,3 +1,4 @@
+<%@page import="com.sun.jersey.core.util.Base64"%>
 <%@page import="java.util.Vector"%>
 <%@page import="wekaexplorer.WekaExplorer"%>
 <%@page import="weka.core.Instances"%>
@@ -59,7 +60,7 @@
                 
                 if(judul!=null){
                     
-                    article = article.replaceAll("[\n\r\t]", " ");
+                    article = article.replaceAll("[\n\r\t\"-_?(){}.,]", " ");
                     
                     W.setClassifier(W.LoadModel("C:\\Users\\Stephen\\Documents\\kuliah\\model.model"));
                     //System.out.println("article: " + article);
@@ -73,10 +74,13 @@
                     //System.out.println("classifying data............");
                     W.ClassifyInstances(W.getClassifier(),dataUnlabeled);
                     
-                    Cookie cookiejudul = new Cookie("judul",judul);
+                    byte[] judulbytesEncoded = Base64.encode(judul.getBytes());
+                    Cookie cookiejudul = new Cookie("judul",new String(judulbytesEncoded));
                     cookiejudul.setMaxAge(60*60*2);
                     response.addCookie(cookiejudul);
-                    Cookie cookiearticle = new Cookie("article",article);
+                    
+                    byte[] articlebytesEncoded = Base64.encode(article.getBytes());
+                    Cookie cookiearticle = new Cookie("article",new String(articlebytesEncoded));
                     cookiearticle.setMaxAge(60*60*2);
                     response.addCookie(cookiearticle);
                 }
@@ -161,14 +165,16 @@
                                // Mencari cookie judul dan article yang telah disimpan
                                int i=0;
                                Cookie[] cookies = request.getCookies();
-                               String judulfromcookies = "";
-                               String articlefromcookies = "";
+                               String judulfromcookies = null;
+                               String articlefromcookies = null;
                                while(i<cookies.length) {
                                    if(cookies[i].getName().equalsIgnoreCase("judul")) {
-                                       judulfromcookies = cookies[i].getValue();
+                                       byte[] judulvalueDecoded= Base64.decode(cookies[i].getValue());
+                                       judulfromcookies = new String(judulvalueDecoded);
                                    }
                                    else if(cookies[i].getName().equalsIgnoreCase("article")) {
-                                       articlefromcookies = cookies[i].getValue();
+                                       byte[] articlevalueDecoded= Base64.decode(cookies[i].getValue());
+                                       articlefromcookies = new String(articlevalueDecoded);
                                    }
                                    i++;
                                }
